@@ -20,24 +20,9 @@ RaylibKey = int
 class ImguiBackend(ModernGLRenderer):
     key_map: Dict[RaylibKey, imgui.Key]
 
-    def __init__(self, attach_callbacks: bool = True):
+    def __init__(self):
         super(ImguiBackend, self).__init__(ctx=moderngl.get_context())
         self.window = rl.glfwGetCurrentContext()
-
-        if attach_callbacks:
-            # This is a bit of a hack to keep the callbacks alive
-            self._char_callback = ffi.callback(
-                "void(GLFWwindow*, unsigned int)", self.char_callback
-            )
-
-            # The problem of use glfw callback here is that override the internal callback of raylib(so the input only works on the imgui context)
-            # my solution was using a event manager to handle the events @see https://github.com/Scr44gr/arepy/blob/main/arepy/engine/integrations/imgui/backend.py#L37
-            # but i'm pretty sure that there is a better way to do this ^-^
-
-            rl.glfwSetCharCallback(
-                self.window,
-                self._char_callback,
-            )
 
         self.io.display_size = ImVec2(rl.GetScreenWidth(),
                                       rl.GetScreenHeight())  # NOTE: maybe unnecessary since is set again in process_inputs()
@@ -65,9 +50,6 @@ class ImguiBackend(ModernGLRenderer):
         self.last_alt_pressed = False
         self.last_super_pressed = False
 
-
-    def _create_callback(self, ctype, func):
-        return ffi.callback(ctype, func)
 
     def _map_keys(self):
         self.key_map = {}
@@ -178,12 +160,6 @@ class ImguiBackend(ModernGLRenderer):
         key_map[rl.KEY_KP_ENTER] = imgui.Key.keypad_enter
         key_map[rl.KEY_KP_EQUAL] = imgui.Key.keypad_equal
 
-    def char_callback(self, window, char):
-        io = imgui.get_io()
-
-        if 0 < char < 0x10000:
-            io.add_input_character(char)
-
     def _set_mouse_event(self, ray_mouse, imgui_mouse):
         if rl.IsMouseButtonPressed(ray_mouse):
             self.io.add_mouse_button_event(imgui_mouse, True)
@@ -238,18 +214,14 @@ class ImguiBackend(ModernGLRenderer):
                 io.add_key_event(imgui_key, False)
             elif rl.IsKeyPressed(ray_key):
                 io.add_key_event(imgui_key, True)
-        #
-        #     if (io.WantCaptureKeyboard)
-        #     {
-        #         // add the text input in order
-        #         unsigned int pressed = GetCharPressed();
-        #         while (pressed != 0)
-        #         {
-        #             io.AddInputCharacter(pressed);
-        #             pressed = GetCharPressed();
-        #         }
-        #     }
-        #
+
+        if io.want_capture_keyboard:
+            pressed = rl.GetCharPressed()
+            while pressed != 0:
+                io.add_input_character(pressed)
+                pressed = rl.GetCharPressed()
+
+
         if not io.want_set_mouse_pos:
             io.add_mouse_pos_event(rl.GetMouseX(), rl.GetMouseY())
 
