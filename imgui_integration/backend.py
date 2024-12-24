@@ -12,14 +12,13 @@ from raylib.defines import GLFW_FOCUSED, GLFW_PRESS, GLFW_RELEASE
 
 from .renderer import ModernGLRenderer
 
-GlfwKey = int
+RaylibKey = int
 
 
 
 
 class ImguiBackend(ModernGLRenderer):
-    key_map: Dict[GlfwKey, imgui.Key]
-    modifier_map: Dict[GlfwKey, imgui.Key]
+    key_map: Dict[RaylibKey, imgui.Key]
 
     def __init__(self, attach_callbacks: bool = True):
         super(ImguiBackend, self).__init__(ctx=moderngl.get_context())
@@ -27,9 +26,6 @@ class ImguiBackend(ModernGLRenderer):
 
         if attach_callbacks:
             # This is a bit of a hack to keep the callbacks alive
-            self._keyboard_callback = ffi.callback(
-                "void(GLFWwindow *, int, int, int, int)", self.keyboard_callback
-            )
             self._char_callback = ffi.callback(
                 "void(GLFWwindow*, unsigned int)", self.char_callback
             )
@@ -37,10 +33,7 @@ class ImguiBackend(ModernGLRenderer):
             # The problem of use glfw callback here is that override the internal callback of raylib(so the input only works on the imgui context)
             # my solution was using a event manager to handle the events @see https://github.com/Scr44gr/arepy/blob/main/arepy/engine/integrations/imgui/backend.py#L37
             # but i'm pretty sure that there is a better way to do this ^-^
-            rl.glfwSetKeyCallback(
-                self.window,
-                self._keyboard_callback,
-            )
+
             rl.glfwSetCharCallback(
                 self.window,
                 self._char_callback,
@@ -66,71 +59,124 @@ class ImguiBackend(ModernGLRenderer):
 
         self._map_keys()
 
+        self.last_frame_focused = False
+        self.last_control_pressed = False
+        self.last_shift_pressed = False
+        self.last_alt_pressed = False
+        self.last_super_pressed = False
+
+
     def _create_callback(self, ctype, func):
         return ffi.callback(ctype, func)
 
     def _map_keys(self):
         self.key_map = {}
         key_map = self.key_map
-        key_map[rl.KEY_LEFT] = imgui.Key.left_arrow
-        key_map[rl.KEY_RIGHT] = imgui.Key.right_arrow
 
-        key_map[rl.KEY_LEFT_CONTROL] = imgui.Key.left_ctrl
-        key_map[rl.KEY_RIGHT_CONTROL] = imgui.Key.right_ctrl
-        key_map[rl.KEY_LEFT_SHIFT] = imgui.Key.left_shift
-        key_map[rl.KEY_RIGHT_SHIFT] = imgui.Key.right_shift
-        key_map[rl.KEY_LEFT_ALT] = imgui.Key.left_alt
-        key_map[rl.KEY_RIGHT_ALT] = imgui.Key.right_alt
-        key_map[rl.KEY_LEFT_SUPER] = imgui.Key.left_super
-        key_map[rl.KEY_RIGHT_SUPER] = imgui.Key.right_super
-
+        key_map[rl.KEY_APOSTROPHE] = imgui.Key.apostrophe
+        key_map[rl.KEY_COMMA] = imgui.Key.comma
+        key_map[rl.KEY_MINUS] = imgui.Key.minus
+        key_map[rl.KEY_PERIOD] = imgui.Key.period
+        key_map[rl.KEY_SLASH] = imgui.Key.slash
+        key_map[rl.KEY_ZERO] = imgui.Key._0
+        key_map[rl.KEY_ONE] = imgui.Key._1
+        key_map[rl.KEY_TWO] = imgui.Key._2
+        key_map[rl.KEY_THREE] = imgui.Key._3
+        key_map[rl.KEY_FOUR] = imgui.Key._4
+        key_map[rl.KEY_FIVE] = imgui.Key._5
+        key_map[rl.KEY_SIX] = imgui.Key._6
+        key_map[rl.KEY_SEVEN] = imgui.Key._7
+        key_map[rl.KEY_EIGHT] = imgui.Key._8
+        key_map[rl.KEY_NINE] = imgui.Key._9
+        key_map[rl.KEY_SEMICOLON] = imgui.Key.semicolon
+        key_map[rl.KEY_EQUAL] = imgui.Key.equal
+        key_map[rl.KEY_A] = imgui.Key.a
+        key_map[rl.KEY_B] = imgui.Key.b
+        key_map[rl.KEY_C] = imgui.Key.c
+        key_map[rl.KEY_D] = imgui.Key.d
+        key_map[rl.KEY_E] = imgui.Key.e
+        key_map[rl.KEY_F] = imgui.Key.f
+        key_map[rl.KEY_G] = imgui.Key.g
+        key_map[rl.KEY_H] = imgui.Key.h
+        key_map[rl.KEY_I] = imgui.Key.i
+        key_map[rl.KEY_J] = imgui.Key.j
+        key_map[rl.KEY_K] = imgui.Key.k
+        key_map[rl.KEY_L] = imgui.Key.l
+        key_map[rl.KEY_M] = imgui.Key.m
+        key_map[rl.KEY_N] = imgui.Key.n
+        key_map[rl.KEY_O] = imgui.Key.o
+        key_map[rl.KEY_P] = imgui.Key.p
+        key_map[rl.KEY_Q] = imgui.Key.q
+        key_map[rl.KEY_R] = imgui.Key.r
+        key_map[rl.KEY_S] = imgui.Key.s
+        key_map[rl.KEY_T] = imgui.Key.t
+        key_map[rl.KEY_U] = imgui.Key.u
+        key_map[rl.KEY_V] = imgui.Key.v
+        key_map[rl.KEY_W] = imgui.Key.w
+        key_map[rl.KEY_X] = imgui.Key.x
+        key_map[rl.KEY_Y] = imgui.Key.y
+        key_map[rl.KEY_Z] = imgui.Key.z
+        key_map[rl.KEY_SPACE] = imgui.Key.space
+        key_map[rl.KEY_ESCAPE] = imgui.Key.escape
+        key_map[rl.KEY_ENTER] = imgui.Key.enter
         key_map[rl.KEY_TAB] = imgui.Key.tab
-        key_map[rl.KEY_LEFT] = imgui.Key.left_arrow
+        key_map[rl.KEY_BACKSPACE] = imgui.Key.backspace
+        key_map[rl.KEY_INSERT] = imgui.Key.insert
+        key_map[rl.KEY_DELETE] = imgui.Key.delete
         key_map[rl.KEY_RIGHT] = imgui.Key.right_arrow
-        key_map[rl.KEY_UP] = imgui.Key.up_arrow
+        key_map[rl.KEY_LEFT] = imgui.Key.left_arrow
         key_map[rl.KEY_DOWN] = imgui.Key.down_arrow
+        key_map[rl.KEY_UP] = imgui.Key.up_arrow
         key_map[rl.KEY_PAGE_UP] = imgui.Key.page_up
         key_map[rl.KEY_PAGE_DOWN] = imgui.Key.page_down
         key_map[rl.KEY_HOME] = imgui.Key.home
         key_map[rl.KEY_END] = imgui.Key.end
-        key_map[rl.KEY_INSERT] = imgui.Key.insert
-        key_map[rl.KEY_DELETE] = imgui.Key.delete
-        key_map[rl.KEY_BACKSPACE] = imgui.Key.backspace
-        key_map[rl.KEY_SPACE] = imgui.Key.space
-        key_map[rl.KEY_ENTER] = imgui.Key.enter
-        key_map[rl.KEY_ESCAPE] = imgui.Key.escape
+        key_map[rl.KEY_CAPS_LOCK] = imgui.Key.caps_lock
+        key_map[rl.KEY_SCROLL_LOCK] = imgui.Key.scroll_lock
+        key_map[rl.KEY_NUM_LOCK] = imgui.Key.num_lock
+        key_map[rl.KEY_PRINT_SCREEN] = imgui.Key.print_screen
+        key_map[rl.KEY_PAUSE] = imgui.Key.pause
+        key_map[rl.KEY_F1] = imgui.Key.f1
+        key_map[rl.KEY_F2] = imgui.Key.f2
+        key_map[rl.KEY_F3] = imgui.Key.f3
+        key_map[rl.KEY_F4] = imgui.Key.f4
+        key_map[rl.KEY_F5] = imgui.Key.f5
+        key_map[rl.KEY_F6] = imgui.Key.f6
+        key_map[rl.KEY_F7] = imgui.Key.f7
+        key_map[rl.KEY_F8] = imgui.Key.f8
+        key_map[rl.KEY_F9] = imgui.Key.f9
+        key_map[rl.KEY_F10] = imgui.Key.f10
+        key_map[rl.KEY_F11] = imgui.Key.f11
+        key_map[rl.KEY_F12] = imgui.Key.f12
+        key_map[rl.KEY_LEFT_SHIFT] = imgui.Key.left_shift
+        key_map[rl.KEY_LEFT_CONTROL] = imgui.Key.left_ctrl
+        key_map[rl.KEY_LEFT_ALT] = imgui.Key.left_alt
+        key_map[rl.KEY_LEFT_SUPER] = imgui.Key.left_super
+        key_map[rl.KEY_RIGHT_SHIFT] = imgui.Key.right_shift
+        key_map[rl.KEY_RIGHT_CONTROL] = imgui.Key.right_ctrl
+        key_map[rl.KEY_RIGHT_ALT] = imgui.Key.right_alt
+        key_map[rl.KEY_RIGHT_SUPER] = imgui.Key.right_super
+        key_map[rl.KEY_KB_MENU] = imgui.Key.menu
+        key_map[rl.KEY_LEFT_BRACKET] = imgui.Key.left_bracket
+        key_map[rl.KEY_BACKSLASH] = imgui.Key.backslash
+        key_map[rl.KEY_RIGHT_BRACKET] = imgui.Key.right_bracket
+        key_map[rl.KEY_GRAVE] = imgui.Key.grave_accent
+        key_map[rl.KEY_KP_1] = imgui.Key.keypad1
+        key_map[rl.KEY_KP_2] = imgui.Key.keypad2
+        key_map[rl.KEY_KP_3] = imgui.Key.keypad3
+        key_map[rl.KEY_KP_4] = imgui.Key.keypad4
+        key_map[rl.KEY_KP_5] = imgui.Key.keypad5
+        key_map[rl.KEY_KP_6] = imgui.Key.keypad6
+        key_map[rl.KEY_KP_7] = imgui.Key.keypad7
+        key_map[rl.KEY_KP_8] = imgui.Key.keypad8
+        key_map[rl.KEY_KP_9] = imgui.Key.keypad9
+        key_map[rl.KEY_KP_DECIMAL] = imgui.Key.keypad_decimal
+        key_map[rl.KEY_KP_DIVIDE] = imgui.Key.keypad_divide
+        key_map[rl.KEY_KP_MULTIPLY] = imgui.Key.keypad_multiply
+        key_map[rl.KEY_KP_SUBTRACT] = imgui.Key.keypad_subtract
+        key_map[rl.KEY_KP_ADD] = imgui.Key.keypad_add
         key_map[rl.KEY_KP_ENTER] = imgui.Key.keypad_enter
-        key_map[rl.KEY_A] = imgui.Key.a
-        key_map[rl.KEY_C] = imgui.Key.c
-        key_map[rl.KEY_V] = imgui.Key.v
-        key_map[rl.KEY_X] = imgui.Key.x
-        key_map[rl.KEY_Y] = imgui.Key.y
-        key_map[rl.KEY_Z] = imgui.Key.z
-
-        self.modifier_map = {}
-        self.modifier_map[rl.KEY_LEFT_CONTROL] = imgui.Key.mod_ctrl
-        self.modifier_map[rl.KEY_RIGHT_CONTROL] = imgui.Key.mod_ctrl
-        self.modifier_map[rl.KEY_LEFT_SHIFT] = imgui.Key.mod_shift
-        self.modifier_map[rl.KEY_RIGHT_SHIFT] = imgui.Key.mod_shift
-        self.modifier_map[rl.KEY_LEFT_ALT] = imgui.Key.mod_alt
-        self.modifier_map[rl.KEY_RIGHT_ALT] = imgui.Key.mod_alt
-        self.modifier_map[rl.KEY_LEFT_SUPER] = imgui.Key.mod_super
-        self.modifier_map[rl.KEY_RIGHT_SUPER] = imgui.Key.mod_super
-
-    def keyboard_callback(self, window, glfw_key: int, scancode, action, mods):
-        # perf: local for faster access
-        io = self.io
-
-        if glfw_key not in self.key_map:
-            return
-        imgui_key = self.key_map[glfw_key]
-
-        down = action != GLFW_RELEASE
-        io.add_key_event(imgui_key, down)
-
-        if glfw_key in self.modifier_map:
-            imgui_key = self.modifier_map[glfw_key]
-            io.add_key_event(imgui_key, down)
+        key_map[rl.KEY_KP_EQUAL] = imgui.Key.keypad_equal
 
     def char_callback(self, window, char):
         io = imgui.get_io()
@@ -161,40 +207,37 @@ class ImguiBackend(ModernGLRenderer):
 
         io.delta_time = max(rl.GetFrameTime(), 0.001)
 
-        #     bool focused = IsWindowFocused();
-        #     if (focused != LastFrameFocused)
-        #         io.AddFocusEvent(focused);
-        #     LastFrameFocused = focused;
-        #
-        #     // handle the modifyer key events so that shortcuts work
-        #     bool ctrlDown = rlImGuiIsControlDown();
-        #     if (ctrlDown != LastControlPressed)
-        #         io.AddKeyEvent(ImGuiMod_Ctrl, ctrlDown);
-        #     LastControlPressed = ctrlDown;
-        #
-        #     bool shiftDown = rlImGuiIsShiftDown();
-        #     if (shiftDown != LastShiftPressed)
-        #         io.AddKeyEvent(ImGuiMod_Shift, shiftDown);
-        #     LastShiftPressed = shiftDown;
-        #
-        #     bool altDown = rlImGuiIsAltDown();
-        #     if (altDown != LastAltPressed)
-        #         io.AddKeyEvent(ImGuiMod_Alt, altDown);
-        #     LastAltPressed = altDown;
-        #
-        #     bool superDown = rlImGuiIsSuperDown();
-        #     if (superDown != LastSuperPressed)
-        #         io.AddKeyEvent(ImGuiMod_Super, superDown);
-        #     LastSuperPressed = superDown;
-        #
-        #     // walk the keymap and check for up and down events
-        #     for (const auto keyItr : RaylibKeyMap)
-        #     {
-        #         if (IsKeyReleased(keyItr.first))
-        #             io.AddKeyEvent(keyItr.second, false);
-        #         else if(IsKeyPressed(keyItr.first))
-        #             io.AddKeyEvent(keyItr.second, true);
-        #     }
+        focused = rl.IsWindowFocused()
+        if focused != self.last_frame_focused:
+            io.add_focus_event(focused)
+        self.last_frame_focused = focused
+
+        ctrl_down = rl.IsKeyDown(rl.KEY_RIGHT_CONTROL) or rl.IsKeyDown(rl.KEY_LEFT_CONTROL)
+        if ctrl_down != self.last_control_pressed:
+            io.add_key_event(imgui.Key.mod_ctrl, ctrl_down)
+        self.last_control_pressed = ctrl_down
+
+        shift_down = rl.IsKeyDown(rl.KEY_RIGHT_SHIFT) or rl.IsKeyDown(rl.KEY_LEFT_SHIFT)
+        if shift_down != self.last_shift_pressed:
+            io.add_key_event(imgui.Key.mod_shift, shift_down)
+        self.last_shift_pressed = shift_down
+
+        alt_down = rl.IsKeyDown(rl.KEY_RIGHT_ALT) or rl.IsKeyDown(rl.KEY_LEFT_ALT)
+        if alt_down != self.last_alt_pressed:
+            io.add_key_event(imgui.Key.mod_alt, alt_down)
+        self.last_alt_pressed = alt_down
+
+        super_down = rl.IsKeyDown(rl.KEY_RIGHT_SUPER) or rl.IsKeyDown(rl.KEY_LEFT_SUPER)
+        if super_down != self.last_super_pressed:
+            io.add_key_event(imgui.Key.mod_super, super_down)
+        self.last_super_pressed = super_down
+
+
+        for ray_key, imgui_key in self.key_map.items():
+            if rl.IsKeyReleased(ray_key):
+                io.add_key_event(imgui_key, False)
+            elif rl.IsKeyPressed(ray_key):
+                io.add_key_event(imgui_key, True)
         #
         #     if (io.WantCaptureKeyboard)
         #     {
@@ -222,31 +265,31 @@ class ImguiBackend(ModernGLRenderer):
 
         #     if (io.ConfigFlags & ImGuiConfigFlags_NavEnableGamepad && IsGamepadAvailable(0))
         #     {
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_LEFT_FACE_UP, ImGuiKey_GamepadDpadUp);
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_LEFT_FACE_RIGHT, ImGuiKey_GamepadDpadRight);
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_LEFT_FACE_DOWN, ImGuiKey_GamepadDpadDown);
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_LEFT_FACE_LEFT, ImGuiKey_GamepadDpadLeft);
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_LEFT_FACE_UP, imgui.Key.GamepadDpadUp);
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_LEFT_FACE_RIGHT, imgui.Key.GamepadDpadRight);
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_LEFT_FACE_DOWN, imgui.Key.GamepadDpadDown);
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_LEFT_FACE_LEFT, imgui.Key.GamepadDpadLeft);
         #
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_RIGHT_FACE_UP, ImGuiKey_GamepadFaceUp);
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT, ImGuiKey_GamepadFaceLeft);
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_RIGHT_FACE_DOWN, ImGuiKey_GamepadFaceDown);
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_RIGHT_FACE_LEFT, ImGuiKey_GamepadFaceRight);
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_RIGHT_FACE_UP, imgui.Key.GamepadFaceUp);
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT, imgui.Key.GamepadFaceLeft);
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_RIGHT_FACE_DOWN, imgui.Key.GamepadFaceDown);
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_RIGHT_FACE_LEFT, imgui.Key.GamepadFaceRight);
         #
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_LEFT_TRIGGER_1, ImGuiKey_GamepadL1);
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_LEFT_TRIGGER_2, ImGuiKey_GamepadL2);
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_RIGHT_TRIGGER_1, ImGuiKey_GamepadR1);
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_RIGHT_TRIGGER_2, ImGuiKey_GamepadR2);
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_LEFT_THUMB, ImGuiKey_GamepadL3);
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_RIGHT_THUMB, ImGuiKey_GamepadR3);
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_LEFT_TRIGGER_1, imgui.Key.GamepadL1);
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_LEFT_TRIGGER_2, imgui.Key.GamepadL2);
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_RIGHT_TRIGGER_1, imgui.Key.GamepadR1);
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_RIGHT_TRIGGER_2, imgui.Key.GamepadR2);
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_LEFT_THUMB, imgui.Key.GamepadL3);
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_RIGHT_THUMB, imgui.Key.GamepadR3);
         #
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_MIDDLE_LEFT, ImGuiKey_GamepadStart);
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_MIDDLE_RIGHT, ImGuiKey_GamepadBack);
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_MIDDLE_LEFT, imgui.Key.GamepadStart);
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_MIDDLE_RIGHT, imgui.Key.GamepadBack);
         #
         #         // left stick
-        #         HandleGamepadStickEvent(io, GAMEPAD_AXIS_LEFT_X, ImGuiKey_GamepadLStickLeft, ImGuiKey_GamepadLStickRight);
-        #         HandleGamepadStickEvent(io, GAMEPAD_AXIS_LEFT_Y, ImGuiKey_GamepadLStickUp, ImGuiKey_GamepadLStickDown);
+        #         HandleGamepadStickEvent(io, GAMEPAD_AXIS_LEFT_X, imgui.Key.GamepadLStickLeft, imgui.Key.GamepadLStickRight);
+        #         HandleGamepadStickEvent(io, GAMEPAD_AXIS_LEFT_Y, imgui.Key.GamepadLStickUp, imgui.Key.GamepadLStickDown);
         #
         #         // right stick
-        #         HandleGamepadStickEvent(io, GAMEPAD_AXIS_RIGHT_X, ImGuiKey_GamepadRStickLeft, ImGuiKey_GamepadRStickRight);
-        #         HandleGamepadStickEvent(io, GAMEPAD_AXIS_RIGHT_Y, ImGuiKey_GamepadRStickUp, ImGuiKey_GamepadRStickDown);
+        #         HandleGamepadStickEvent(io, GAMEPAD_AXIS_RIGHT_X, imgui.Key.GamepadRStickLeft, imgui.Key.GamepadRStickRight);
+        #         HandleGamepadStickEvent(io, GAMEPAD_AXIS_RIGHT_Y, imgui.Key.GamepadRStickUp, imgui.Key.GamepadRStickDown);
         #     }
