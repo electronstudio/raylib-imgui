@@ -147,6 +147,7 @@ class ImguiBackend(ModernGLRenderer):
 
     def resize_callback(self, window, width, height):
         self.io.display_size = ImVec2(width, height)
+        print(width, height)
 
     def _set_mouse_event(self, ray_mouse, imgui_mouse):
         if rl.IsMouseButtonPressed(ray_mouse):
@@ -169,7 +170,7 @@ class ImguiBackend(ModernGLRenderer):
             (window_width, window_height), (fb_width, fb_height)
         )  # type: ignore
 
-        io.delta_time = min(rl.GetFrameTime(), 0.001)
+        io.delta_time = max(rl.GetFrameTime(), 0.001)
 
         #     bool focused = IsWindowFocused();
         #     if (focused != LastFrameFocused)
