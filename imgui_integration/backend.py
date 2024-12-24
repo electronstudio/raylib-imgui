@@ -30,9 +30,6 @@ class ImguiBackend(ModernGLRenderer):
             self._keyboard_callback = ffi.callback(
                 "void(GLFWwindow *, int, int, int, int)", self.keyboard_callback
             )
-            self._mouse_callback = ffi.callback(
-                "void(GLFWwindow*, double, double)", self.mouse_callback
-            )
             self._resize_callback = ffi.callback(
                 "void(GLFWwindow*, int, int)", self.resize_callback
             )
@@ -46,10 +43,6 @@ class ImguiBackend(ModernGLRenderer):
             rl.glfwSetKeyCallback(
                 self.window,
                 self._keyboard_callback,
-            )
-            rl.glfwSetCursorPosCallback(
-                self.window,
-                self._mouse_callback,
             )
             rl.glfwSetWindowSizeCallback(
                 self.window,
@@ -68,6 +61,12 @@ class ImguiBackend(ModernGLRenderer):
 
         def set_clipboard_text(_ctx: imgui.internal.Context, text: str) -> None:
             rl.glfwSetClipboardString(self.window, text.encode("utf-8"))
+
+        self.io.mouse_pos = ImVec2(0, 0)
+
+        self.io.backend_flags = (imgui.BackendFlags_.has_set_mouse_pos |
+                                 imgui.BackendFlags_.has_mouse_cursors |
+                                 imgui.BackendFlags_.has_gamepad)
 
         imgui.get_platform_io().platform_get_clipboard_text_fn = get_clipboard_text
         imgui.get_platform_io().platform_set_clipboard_text_fn = set_clipboard_text
@@ -149,16 +148,6 @@ class ImguiBackend(ModernGLRenderer):
     def resize_callback(self, window, width, height):
         self.io.display_size = ImVec2(width, height)
 
-    def mouse_callback(self, *args, **kwargs):
-        if rl.glfwGetWindowAttrib(self.window, GLFW_FOCUSED):
-            x_pos = ffi.new("double *")
-            y_pos = ffi.new("double *")
-            rl.glfwGetCursorPos(self.window, x_pos, y_pos)
-            assert x_pos and y_pos
-            self.io.add_mouse_pos_event(x_pos[0], y_pos[0])
-        else:
-            self.io.add_mouse_pos_event(-1, -1)
-
     def _set_mouse_event(self, ray_mouse, imgui_mouse):
         if rl.IsMouseButtonPressed(ray_mouse):
             self.io.add_mouse_button_event(imgui_mouse, True)
@@ -228,11 +217,9 @@ class ImguiBackend(ModernGLRenderer):
         #         }
         #     }
         #
-        #     if (!io.WantSetMousePos)
-        #     {
-        #         io.AddMousePosEvent((float)GetMouseX(), (float)GetMouseY());
-        #     }
-        #
+        if not io.want_set_mouse_pos:
+            io.add_mouse_pos_event(rl.GetMouseX(), rl.GetMouseY())
+
 
         self._set_mouse_event(rl.MOUSE_BUTTON_LEFT, 0)
         self._set_mouse_event(rl.MOUSE_BUTTON_RIGHT, 1)
