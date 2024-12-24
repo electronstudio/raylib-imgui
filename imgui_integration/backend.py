@@ -7,8 +7,6 @@ import moderngl
 import raylib as rl
 from imgui_bundle import ImVec2, imgui
 from imgui_bundle.python_backends import compute_fb_scale
-from pyray import ffi
-from raylib.defines import GLFW_FOCUSED, GLFW_PRESS, GLFW_RELEASE
 
 from .renderer import ModernGLRenderer
 
@@ -22,16 +20,15 @@ class ImguiBackend(ModernGLRenderer):
 
     def __init__(self):
         super(ImguiBackend, self).__init__(ctx=moderngl.get_context())
-        self.window = rl.glfwGetCurrentContext()
 
         self.io.display_size = ImVec2(rl.GetScreenWidth(),
                                       rl.GetScreenHeight())  # NOTE: maybe unnecessary since is set again in process_inputs()
 
         def get_clipboard_text(_ctx: imgui.internal.Context) -> str:
-            return rl.glfwGetClipboardString(self.window).decode("utf-8")
+            return rl.ffi.string(rl.GetClipboardText()).decode("utf-8")
 
         def set_clipboard_text(_ctx: imgui.internal.Context, text: str) -> None:
-            rl.glfwSetClipboardString(self.window, text.encode("utf-8"))
+            rl.SetClipboardText(text.encode("utf-8"))
 
         self.io.mouse_pos = ImVec2(0, 0)
 
