@@ -93,7 +93,6 @@ class ImguiBackend(ModernGLRenderer):
         imgui.get_platform_io().platform_set_clipboard_text_fn = set_clipboard_text
 
         self._map_keys()
-        self._gui_time = None
 
     def _create_callback(self, ctype, func):
         return ffi.callback(ctype, func)
@@ -187,7 +186,7 @@ class ImguiBackend(ModernGLRenderer):
         self.io.add_mouse_wheel_event(x_offset, y_offset)
 
     def process_inputs(self):
-        io = imgui.get_io()
+        io = self.io
 
         # Get window and framebuffer dimensions
         window_width, window_height = rl.GetScreenWidth(), rl.GetScreenHeight()
@@ -199,15 +198,4 @@ class ImguiBackend(ModernGLRenderer):
             (window_width, window_height), (fb_width, fb_height)
         )  # type: ignore
 
-        # Calculate delta time
-        current_fps = rl.GetFPS() or 60
-        current_time = rl.glfwGetTime()
-        io.delta_time = 1.0 / current_fps
-
-        if self._gui_time:
-            io.delta_time = current_time - self._gui_time
-        if io.delta_time <= 0.0:
-            io.delta_time = 1.0 / 1000.0
-
-        # Update GUI time
-        self._gui_time = current_time
+        io.delta_time = min(rl.GetFrameTime(), 0.001)
