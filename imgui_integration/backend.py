@@ -166,6 +166,21 @@ class ImguiBackend(ModernGLRenderer):
         elif rl.IsMouseButtonReleased(ray_mouse):
             self.io.add_mouse_button_event(imgui_mouse, False)
 
+    def _handle_gamepadbutton_event(self, button, key):
+        if rl.IsGamepadButtonPressed(0, button):
+            self.io.add_key_event(key, True)
+        elif rl.IsGamepadButtonReleased(0, button):
+            self.io.add_key_event(key, False)
+
+
+    def _handle_gamepad_stick_event(self, axis,  negKey,  posKey):
+        deadZone = 0.20
+        axisValue = rl.GetGamepadAxisMovement(0, axis)
+
+        self.io.add_key_analog_event(negKey, axisValue < -deadZone, -axisValue if axisValue < -deadZone else 0)
+        self.io.add_key_analog_event(posKey, axisValue > deadZone, axisValue if axisValue > deadZone else 0)
+
+
     def process_inputs(self):
         io = self.io
 
@@ -235,33 +250,30 @@ class ImguiBackend(ModernGLRenderer):
         mouse_wheel = rl.GetMouseWheelMoveV()
         io.add_mouse_wheel_event(mouse_wheel.x, mouse_wheel.y)
 
-        #     if (io.ConfigFlags & ImGuiConfigFlags_NavEnableGamepad && IsGamepadAvailable(0))
-        #     {
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_LEFT_FACE_UP, imgui.Key.GamepadDpadUp);
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_LEFT_FACE_RIGHT, imgui.Key.GamepadDpadRight);
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_LEFT_FACE_DOWN, imgui.Key.GamepadDpadDown);
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_LEFT_FACE_LEFT, imgui.Key.GamepadDpadLeft);
-        #
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_RIGHT_FACE_UP, imgui.Key.GamepadFaceUp);
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT, imgui.Key.GamepadFaceLeft);
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_RIGHT_FACE_DOWN, imgui.Key.GamepadFaceDown);
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_RIGHT_FACE_LEFT, imgui.Key.GamepadFaceRight);
-        #
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_LEFT_TRIGGER_1, imgui.Key.GamepadL1);
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_LEFT_TRIGGER_2, imgui.Key.GamepadL2);
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_RIGHT_TRIGGER_1, imgui.Key.GamepadR1);
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_RIGHT_TRIGGER_2, imgui.Key.GamepadR2);
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_LEFT_THUMB, imgui.Key.GamepadL3);
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_RIGHT_THUMB, imgui.Key.GamepadR3);
-        #
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_MIDDLE_LEFT, imgui.Key.GamepadStart);
-        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_MIDDLE_RIGHT, imgui.Key.GamepadBack);
-        #
-        #         // left stick
-        #         HandleGamepadStickEvent(io, GAMEPAD_AXIS_LEFT_X, imgui.Key.GamepadLStickLeft, imgui.Key.GamepadLStickRight);
-        #         HandleGamepadStickEvent(io, GAMEPAD_AXIS_LEFT_Y, imgui.Key.GamepadLStickUp, imgui.Key.GamepadLStickDown);
-        #
-        #         // right stick
-        #         HandleGamepadStickEvent(io, GAMEPAD_AXIS_RIGHT_X, imgui.Key.GamepadRStickLeft, imgui.Key.GamepadRStickRight);
-        #         HandleGamepadStickEvent(io, GAMEPAD_AXIS_RIGHT_Y, imgui.Key.GamepadRStickUp, imgui.Key.GamepadRStickDown);
-        #     }
+        if (io.config_flags & imgui.ConfigFlags_.nav_enable_gamepad) and rl.IsGamepadAvailable(0):
+            self._handle_gamepadbutton_event(rl.GAMEPAD_BUTTON_LEFT_FACE_UP, imgui.Key.gamepad_dpad_up)
+            self._handle_gamepadbutton_event(rl.GAMEPAD_BUTTON_LEFT_FACE_RIGHT, imgui.Key.gamepad_dpad_right)
+            self._handle_gamepadbutton_event(rl.GAMEPAD_BUTTON_LEFT_FACE_DOWN, imgui.Key.gamepad_dpad_down)
+            self._handle_gamepadbutton_event(rl.GAMEPAD_BUTTON_LEFT_FACE_LEFT, imgui.Key.gamepad_dpad_left)
+
+            self._handle_gamepadbutton_event(rl.GAMEPAD_BUTTON_RIGHT_FACE_UP, imgui.Key.gamepad_face_up)
+            self._handle_gamepadbutton_event(rl.GAMEPAD_BUTTON_RIGHT_FACE_RIGHT, imgui.Key.gamepad_face_left)
+            self._handle_gamepadbutton_event(rl.GAMEPAD_BUTTON_RIGHT_FACE_DOWN, imgui.Key.gamepad_face_down)
+            self._handle_gamepadbutton_event(rl.GAMEPAD_BUTTON_RIGHT_FACE_LEFT, imgui.Key.gamepad_face_left)
+
+            self._handle_gamepadbutton_event(rl.GAMEPAD_BUTTON_LEFT_TRIGGER_1, imgui.Key.gamepad_l1)
+            self._handle_gamepadbutton_event(rl.GAMEPAD_BUTTON_LEFT_TRIGGER_2, imgui.Key.gamepad_l2)
+            self._handle_gamepadbutton_event(rl.GAMEPAD_BUTTON_RIGHT_TRIGGER_1, imgui.Key.gamepad_r1)
+            self._handle_gamepadbutton_event(rl.GAMEPAD_BUTTON_RIGHT_TRIGGER_2, imgui.Key.gamepad_r2)
+            self._handle_gamepadbutton_event(rl.GAMEPAD_BUTTON_LEFT_THUMB, imgui.Key.gamepad_l3)
+            self._handle_gamepadbutton_event(rl.GAMEPAD_BUTTON_RIGHT_THUMB, imgui.Key.gamepad_r3)
+
+            self._handle_gamepadbutton_event(rl.GAMEPAD_BUTTON_MIDDLE_LEFT, imgui.Key.gamepad_start)
+            self._handle_gamepadbutton_event(rl.GAMEPAD_BUTTON_MIDDLE_RIGHT, imgui.Key.gamepad_back)
+
+            self._handle_gamepad_stick_event(rl.GAMEPAD_AXIS_LEFT_X, imgui.Key.gamepad_l_stick_left, imgui.Key.gamepad_l_stick_right)
+            self._handle_gamepad_stick_event(rl.GAMEPAD_AXIS_LEFT_Y, imgui.Key.gamepad_l_stick_up, imgui.Key.gamepad_l_stick_down)
+
+            self._handle_gamepad_stick_event(rl.GAMEPAD_AXIS_RIGHT_X, imgui.Key.gamepad_r_stick_left, imgui.Key.gamepad_r_stick_right)
+            self._handle_gamepad_stick_event(rl.GAMEPAD_AXIS_RIGHT_Y, imgui.Key.gamepad_r_stick_up, imgui.Key.gamepad_r_stick_down)
+        
