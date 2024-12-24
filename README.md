@@ -1,6 +1,8 @@
 # raylib-imgui
 A minimal example of how to use raylib with imgui-bundle in python.
-
+<p align="center">
+  <img width="802" height="482" src="https://github.com/user-attachments/assets/8d350f4e-d48d-42ce-aead-d4726bb8c6f1">
+</p>
 
 ## Clone the repository 🐙
 ```bash
