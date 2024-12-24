@@ -39,9 +39,6 @@ class ImguiBackend(ModernGLRenderer):
             self._char_callback = ffi.callback(
                 "void(GLFWwindow*, unsigned int)", self.char_callback
             )
-            self._scroll_callback = ffi.callback(
-                "void(GLFWwindow*, double, double)", self.scroll_callback
-            )
 
             # The problem of use glfw callback here is that override the internal callback of raylib(so the input only works on the imgui context)
             # my solution was using a event manager to handle the events @see https://github.com/Scr44gr/arepy/blob/main/arepy/engine/integrations/imgui/backend.py#L37
@@ -61,10 +58,6 @@ class ImguiBackend(ModernGLRenderer):
             rl.glfwSetCharCallback(
                 self.window,
                 self._char_callback,
-            )
-            rl.glfwSetScrollCallback(
-                self.window,
-                self._scroll_callback,
             )
 
         self.io.display_size = ImVec2(rl.GetScreenWidth(),
@@ -166,9 +159,6 @@ class ImguiBackend(ModernGLRenderer):
         else:
             self.io.add_mouse_pos_event(-1, -1)
 
-    def scroll_callback(self, window, x_offset, y_offset):
-        self.io.add_mouse_wheel_event(x_offset, y_offset)
-
     def _set_mouse_event(self, ray_mouse, imgui_mouse):
         if rl.IsMouseButtonPressed(ray_mouse):
             self.io.add_mouse_button_event(imgui_mouse, True)
@@ -243,27 +233,16 @@ class ImguiBackend(ModernGLRenderer):
         #         io.AddMousePosEvent((float)GetMouseX(), (float)GetMouseY());
         #     }
         #
-        #     auto setMouseEvent = [&io](int rayMouse, int imGuiMouse)
-        #         {
-        #             if (IsMouseButtonPressed(rayMouse))
-        #                 io.AddMouseButtonEvent(imGuiMouse, true);
-        #             else if (IsMouseButtonReleased(rayMouse))
-        #                 io.AddMouseButtonEvent(imGuiMouse, false);
-        #         };
-        #
-
 
         self._set_mouse_event(rl.MOUSE_BUTTON_LEFT, 0)
         self._set_mouse_event(rl.MOUSE_BUTTON_RIGHT, 1)
         self._set_mouse_event(rl.MOUSE_BUTTON_MIDDLE, 2)
         self._set_mouse_event(rl.MOUSE_BUTTON_FORWARD,3)
         self._set_mouse_event(rl.MOUSE_BUTTON_BACK, 4)
-        #
-        #     {
-        #         Vector2 mouseWheel = GetMouseWheelMoveV();
-        #         io.AddMouseWheelEvent(mouseWheel.x, mouseWheel.y);
-        #     }
-        #
+
+        mouse_wheel = rl.GetMouseWheelMoveV()
+        io.add_mouse_wheel_event(mouse_wheel.x, mouse_wheel.y)
+
         #     if (io.ConfigFlags & ImGuiConfigFlags_NavEnableGamepad && IsGamepadAvailable(0))
         #     {
         #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_LEFT_FACE_UP, ImGuiKey_GamepadDpadUp);
