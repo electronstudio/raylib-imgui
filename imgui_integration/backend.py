@@ -73,15 +73,9 @@ class ImguiBackend(ModernGLRenderer):
                 self.window,
                 self._scroll_callback,
             )
-        screen_width = ffi.new("int *")
-        screen_height = ffi.new("int *")
-        rl.glfwGetMonitorPhysicalSize(
-            rl.glfwGetPrimaryMonitor(), screen_width, screen_height
-        )
 
-        screen_width = screen_width[0]
-        screen_height = screen_height[0]
-        self.io.display_size = ImVec2(screen_width, screen_height)
+        self.io.display_size = ImVec2(rl.GetScreenWidth(),
+                                      rl.GetScreenHeight())  # NOTE: maybe unnecessary since is set again in process_inputs()
 
         def get_clipboard_text(_ctx: imgui.internal.Context) -> str:
             return rl.glfwGetClipboardString(self.window).decode("utf-8")
@@ -193,6 +187,8 @@ class ImguiBackend(ModernGLRenderer):
         fb_width, fb_height = rl.GetRenderWidth(), rl.GetRenderHeight()
 
         # Set display size and framebuffer scale
+        # TODO: this may need to be more complex on some platforms
+        # see https://github.com/raylib-extras/rlImGui/blob/583d4fea67e67d431319974f0625f680d3840dfb/rlImGui.cpp#L108
         io.display_size = ImVec2(window_width, window_height)
         io.display_framebuffer_scale = compute_fb_scale(
             (window_width, window_height), (fb_width, fb_height)
