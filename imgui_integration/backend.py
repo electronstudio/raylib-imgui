@@ -33,9 +33,6 @@ class ImguiBackend(ModernGLRenderer):
             self._mouse_callback = ffi.callback(
                 "void(GLFWwindow*, double, double)", self.mouse_callback
             )
-            self._mouse_button_callback = ffi.callback(
-                "void(GLFWwindow*, int, int, int)", self.mouse_button_callback
-            )
             self._resize_callback = ffi.callback(
                 "void(GLFWwindow*, int, int)", self.resize_callback
             )
@@ -56,10 +53,6 @@ class ImguiBackend(ModernGLRenderer):
             rl.glfwSetCursorPosCallback(
                 self.window,
                 self._mouse_callback,
-            )
-            rl.glfwSetMouseButtonCallback(
-                self.window,
-                self._mouse_button_callback,
             )
             rl.glfwSetWindowSizeCallback(
                 self.window,
@@ -173,11 +166,14 @@ class ImguiBackend(ModernGLRenderer):
         else:
             self.io.add_mouse_pos_event(-1, -1)
 
-    def mouse_button_callback(self, window, button, action, mods):
-        self.io.add_mouse_button_event(button, action == GLFW_PRESS)
-
     def scroll_callback(self, window, x_offset, y_offset):
         self.io.add_mouse_wheel_event(x_offset, y_offset)
+
+    def _set_mouse_event(self, ray_mouse, imgui_mouse):
+        if rl.IsMouseButtonPressed(ray_mouse):
+            self.io.add_mouse_button_event(imgui_mouse, True)
+        elif rl.IsMouseButtonReleased(ray_mouse):
+            self.io.add_mouse_button_event(imgui_mouse, False)
 
     def process_inputs(self):
         io = self.io
@@ -195,3 +191,106 @@ class ImguiBackend(ModernGLRenderer):
         )  # type: ignore
 
         io.delta_time = min(rl.GetFrameTime(), 0.001)
+
+        #     bool focused = IsWindowFocused();
+        #     if (focused != LastFrameFocused)
+        #         io.AddFocusEvent(focused);
+        #     LastFrameFocused = focused;
+        #
+        #     // handle the modifyer key events so that shortcuts work
+        #     bool ctrlDown = rlImGuiIsControlDown();
+        #     if (ctrlDown != LastControlPressed)
+        #         io.AddKeyEvent(ImGuiMod_Ctrl, ctrlDown);
+        #     LastControlPressed = ctrlDown;
+        #
+        #     bool shiftDown = rlImGuiIsShiftDown();
+        #     if (shiftDown != LastShiftPressed)
+        #         io.AddKeyEvent(ImGuiMod_Shift, shiftDown);
+        #     LastShiftPressed = shiftDown;
+        #
+        #     bool altDown = rlImGuiIsAltDown();
+        #     if (altDown != LastAltPressed)
+        #         io.AddKeyEvent(ImGuiMod_Alt, altDown);
+        #     LastAltPressed = altDown;
+        #
+        #     bool superDown = rlImGuiIsSuperDown();
+        #     if (superDown != LastSuperPressed)
+        #         io.AddKeyEvent(ImGuiMod_Super, superDown);
+        #     LastSuperPressed = superDown;
+        #
+        #     // walk the keymap and check for up and down events
+        #     for (const auto keyItr : RaylibKeyMap)
+        #     {
+        #         if (IsKeyReleased(keyItr.first))
+        #             io.AddKeyEvent(keyItr.second, false);
+        #         else if(IsKeyPressed(keyItr.first))
+        #             io.AddKeyEvent(keyItr.second, true);
+        #     }
+        #
+        #     if (io.WantCaptureKeyboard)
+        #     {
+        #         // add the text input in order
+        #         unsigned int pressed = GetCharPressed();
+        #         while (pressed != 0)
+        #         {
+        #             io.AddInputCharacter(pressed);
+        #             pressed = GetCharPressed();
+        #         }
+        #     }
+        #
+        #     if (!io.WantSetMousePos)
+        #     {
+        #         io.AddMousePosEvent((float)GetMouseX(), (float)GetMouseY());
+        #     }
+        #
+        #     auto setMouseEvent = [&io](int rayMouse, int imGuiMouse)
+        #         {
+        #             if (IsMouseButtonPressed(rayMouse))
+        #                 io.AddMouseButtonEvent(imGuiMouse, true);
+        #             else if (IsMouseButtonReleased(rayMouse))
+        #                 io.AddMouseButtonEvent(imGuiMouse, false);
+        #         };
+        #
+
+
+        self._set_mouse_event(rl.MOUSE_BUTTON_LEFT, 0)
+        self._set_mouse_event(rl.MOUSE_BUTTON_RIGHT, 1)
+        self._set_mouse_event(rl.MOUSE_BUTTON_MIDDLE, 2)
+        self._set_mouse_event(rl.MOUSE_BUTTON_FORWARD,3)
+        self._set_mouse_event(rl.MOUSE_BUTTON_BACK, 4)
+        #
+        #     {
+        #         Vector2 mouseWheel = GetMouseWheelMoveV();
+        #         io.AddMouseWheelEvent(mouseWheel.x, mouseWheel.y);
+        #     }
+        #
+        #     if (io.ConfigFlags & ImGuiConfigFlags_NavEnableGamepad && IsGamepadAvailable(0))
+        #     {
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_LEFT_FACE_UP, ImGuiKey_GamepadDpadUp);
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_LEFT_FACE_RIGHT, ImGuiKey_GamepadDpadRight);
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_LEFT_FACE_DOWN, ImGuiKey_GamepadDpadDown);
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_LEFT_FACE_LEFT, ImGuiKey_GamepadDpadLeft);
+        #
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_RIGHT_FACE_UP, ImGuiKey_GamepadFaceUp);
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT, ImGuiKey_GamepadFaceLeft);
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_RIGHT_FACE_DOWN, ImGuiKey_GamepadFaceDown);
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_RIGHT_FACE_LEFT, ImGuiKey_GamepadFaceRight);
+        #
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_LEFT_TRIGGER_1, ImGuiKey_GamepadL1);
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_LEFT_TRIGGER_2, ImGuiKey_GamepadL2);
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_RIGHT_TRIGGER_1, ImGuiKey_GamepadR1);
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_RIGHT_TRIGGER_2, ImGuiKey_GamepadR2);
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_LEFT_THUMB, ImGuiKey_GamepadL3);
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_RIGHT_THUMB, ImGuiKey_GamepadR3);
+        #
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_MIDDLE_LEFT, ImGuiKey_GamepadStart);
+        #         HandleGamepadButtonEvent(io, GAMEPAD_BUTTON_MIDDLE_RIGHT, ImGuiKey_GamepadBack);
+        #
+        #         // left stick
+        #         HandleGamepadStickEvent(io, GAMEPAD_AXIS_LEFT_X, ImGuiKey_GamepadLStickLeft, ImGuiKey_GamepadLStickRight);
+        #         HandleGamepadStickEvent(io, GAMEPAD_AXIS_LEFT_Y, ImGuiKey_GamepadLStickUp, ImGuiKey_GamepadLStickDown);
+        #
+        #         // right stick
+        #         HandleGamepadStickEvent(io, GAMEPAD_AXIS_RIGHT_X, ImGuiKey_GamepadRStickLeft, ImGuiKey_GamepadRStickRight);
+        #         HandleGamepadStickEvent(io, GAMEPAD_AXIS_RIGHT_Y, ImGuiKey_GamepadRStickUp, ImGuiKey_GamepadRStickDown);
+        #     }
