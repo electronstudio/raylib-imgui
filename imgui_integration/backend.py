@@ -30,9 +30,6 @@ class ImguiBackend(ModernGLRenderer):
             self._keyboard_callback = ffi.callback(
                 "void(GLFWwindow *, int, int, int, int)", self.keyboard_callback
             )
-            self._resize_callback = ffi.callback(
-                "void(GLFWwindow*, int, int)", self.resize_callback
-            )
             self._char_callback = ffi.callback(
                 "void(GLFWwindow*, unsigned int)", self.char_callback
             )
@@ -43,10 +40,6 @@ class ImguiBackend(ModernGLRenderer):
             rl.glfwSetKeyCallback(
                 self.window,
                 self._keyboard_callback,
-            )
-            rl.glfwSetWindowSizeCallback(
-                self.window,
-                self._resize_callback,
             )
             rl.glfwSetCharCallback(
                 self.window,
@@ -144,10 +137,6 @@ class ImguiBackend(ModernGLRenderer):
 
         if 0 < char < 0x10000:
             io.add_input_character(char)
-
-    def resize_callback(self, window, width, height):
-        self.io.display_size = ImVec2(width, height)
-        print(width, height)
 
     def _set_mouse_event(self, ray_mouse, imgui_mouse):
         if rl.IsMouseButtonPressed(ray_mouse):
